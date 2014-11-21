@@ -25,7 +25,7 @@ app.use(multer({
     dest: '/tmp/'
 }));
 
-function finalize(err, resultFilenames, sessionDir, req, res) {
+function finalize(err, resultFilenames, sessionDir, req, res, files) {
     if (resultFilenames.length > 1) {
         var zip = new zipPaths(sessionDir + '/results.zip');
 
@@ -47,9 +47,9 @@ function finalize(err, resultFilenames, sessionDir, req, res) {
             });
         });
     } else {
-        if (req.files.length === 1) {
+        if (files.length === 1) {
             res.writeHead(200, {
-                'Content-Type': req.files[0].mimetype,
+                'Content-Type': files[0].mimetype,
                 'Content-Disposition': 'attachment; filename=' + resultFilenames[0]
             });
 
@@ -67,6 +67,14 @@ app.post('/api/annotate', function(req, res) {
     var resultFilenames = [];
     var sessionId = crypto.randomBytes(20).toString('hex');
     var sessionDir = '/tmp/' + sessionId;
+
+    var files;
+
+    if (_.isArray(req.files["files[]"])) {
+        files = req.files["files[]"];
+    } else {
+        files = [ req.files["files[]"] ];
+    }
 
     var zinterval = 0;
     var zunit = '';
@@ -96,11 +104,11 @@ app.post('/api/annotate', function(req, res) {
 
     fs.mkdirSync(sessionDir);
 
-    _.each(req.files, function(file) {
+    _.each(files, function(file) {
         fs.renameSync(file.path, sessionDir + '/' + file.name);
     });
 
-    async.each(req.files, function (file, callback) {
+    async.each(files, function (file, callback) {
         imageMagick.identify(sessionDir + '/' + file.name, function(err, features) {
             var dpiMultiplier = features.width / 1408;
             console.log("dpiMultiplier", dpiMultiplier);
@@ -226,7 +234,7 @@ app.post('/api/annotate', function(req, res) {
             });
         });
     }, function(err) {
-        finalize(err, resultFilenames, sessionDir, req, res);
+        finalize(err, resultFilenames, sessionDir, req, res, files);
     });
 });
 
@@ -234,6 +242,14 @@ app.post('/api/resize', function(req, res) {
     var resultFilenames = [];
     var sessionId = crypto.randomBytes(20).toString('hex');
     var sessionDir = '/tmp/' + sessionId;
+
+    var files;
+
+    if (_.isArray(req.files["files[]"])) {
+        files = req.files["files[]"];
+    } else {
+        files = [ req.files["files[]"] ];
+    }
 
     var scalePercentage = 100;
 
@@ -243,11 +259,11 @@ app.post('/api/resize', function(req, res) {
 
     fs.mkdirSync(sessionDir);
 
-    _.each(req.files, function(file) {
+    _.each(files, function(file) {
         fs.renameSync(file.path, sessionDir + '/' + file.name);
     });
 
-    async.each(req.files, function (file, callback) {
+    async.each(files, function (file, callback) {
         imageMagick.identify(sessionDir + '/' + file.name, function(err, features) {
             var ext;
             var filenameWithoutExt;
@@ -275,7 +291,7 @@ app.post('/api/resize', function(req, res) {
             });
         });
     }, function(err) {
-        finalize(err, resultFilenames, sessionDir, req, res);
+        finalize(err, resultFilenames, sessionDir, req, res, files);
     });
 });
 
@@ -283,6 +299,14 @@ app.post('/api/legend', function(req, res) {
     var resultFilenames = [];
     var sessionId = crypto.randomBytes(20).toString('hex');
     var sessionDir = '/tmp/' + sessionId;
+
+    var files;
+
+    if (_.isArray(req.files["files[]"])) {
+        files = req.files["files[]"];
+    } else {
+        files = [ req.files["files[]"] ];
+    }
 
     var legendscale = 0;
     var legendscaledecimal = 0;
@@ -304,11 +328,11 @@ app.post('/api/legend', function(req, res) {
 
     fs.mkdirSync(sessionDir);
 
-    _.each(req.files, function(file) {
+    _.each(files, function(file) {
         fs.renameSync(file.path, sessionDir + '/' + file.name);
     });
 
-    async.each(req.files, function (file, callback) {
+    async.each(files, function (file, callback) {
         imageMagick.identify(sessionDir + '/' + file.name, function(err, features) {
             var dpiMultiplier = features.width / 576;
 
@@ -386,7 +410,7 @@ app.post('/api/legend', function(req, res) {
             });
         });
     }, function(err) {
-        finalize(err, resultFilenames, sessionDir, req, res);
+        finalize(err, resultFilenames, sessionDir, req, res, files);
     });
 });
 
