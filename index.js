@@ -105,15 +105,15 @@ app.post('/api/annotate', function(req, res) {
     fs.mkdirSync(sessionDir);
 
     _.each(files, function(file) {
-        fs.renameSync(file.path, sessionDir + '/' + file.name);
+        fs.renameSync(file.path, sessionDir + '/' + file.originalname);
     });
 
     async.each(files, function (file, callback) {
-        imageMagick.identify(sessionDir + '/' + file.name, function(err, features) {
+        imageMagick.identify(sessionDir + '/' + file.originalname, function(err, features) {
             var dpiMultiplier = features.width / 1408;
             console.log("dpiMultiplier", dpiMultiplier);
 
-            var convertArr = [sessionDir + '/' + file.name, '-transparent', 'white', '-stroke', 'black', '-strokewidth', '' + (4 * dpiMultiplier).toFixed(0)];
+            var convertArr = [sessionDir + '/' + file.originalname, '-transparent', 'white', '-stroke', 'black', '-strokewidth', '' + (4 * dpiMultiplier).toFixed(0)];
 
             var drawLine = function(line) {
                 convertArr.push('-draw');
@@ -220,7 +220,7 @@ app.post('/api/annotate', function(req, res) {
             drawTextFromPoint((xyinterval * 2).toFixed(xydecimal) + ' ' + xyunit, copyPointWithOffset(pointOnLine(diagonalLine2, 0.5), { x: 18, y: 9 }));
             drawTextFromPoint((xyinterval * 3).toFixed(xydecimal) + ' ' + xyunit, copyPointWithOffset(pointOnLine(diagonalLine2, 0.75), { x: 18, y: 9 }));
 
-            convertArr.push(sessionDir + '/annotated-' + file.name);
+            convertArr.push(sessionDir + '/annotated-' + file.originalname);
 
             console.log(convertArr);
 
@@ -229,7 +229,7 @@ app.post('/api/annotate', function(req, res) {
                 if (stdout) console.log(stdout);
                 if (stderr) console.log(stderr);
 
-                resultFilenames.push('annotated-' + file.name);
+                resultFilenames.push('annotated-' + file.originalname);
                 callback();
             });
         });
@@ -260,24 +260,24 @@ app.post('/api/resize', function(req, res) {
     fs.mkdirSync(sessionDir);
 
     _.each(files, function(file) {
-        fs.renameSync(file.path, sessionDir + '/' + file.name);
+        fs.renameSync(file.path, sessionDir + '/' + file.originalname);
     });
 
     async.each(files, function (file, callback) {
-        imageMagick.identify(sessionDir + '/' + file.name, function(err, features) {
+        imageMagick.identify(sessionDir + '/' + file.originalname, function(err, features) {
             var ext;
             var filenameWithoutExt;
 
-            if (file.name.indexOf('.') > 0) {
-                ext = '.' + file.name.split('.').slice(-1)[0];
-                filenameWithoutExt = file.name.replace(ext, '');
+            if (file.originalname.indexOf('.') > 0) {
+                ext = '.' + file.originalname.split('.').slice(-1)[0];
+                filenameWithoutExt = file.originalname.replace(ext, '');
             } else {
                 ext = '';
-                filenameWithoutExt = file.name;
+                filenameWithoutExt = file.originalname;
             }
 
             var newFilename = filenameWithoutExt + '_' + scalePercentage + '%' + ext;
-            var convertArr = [sessionDir + '/' + file.name, '-filter', 'Lanczos', '-sampling-factor', '1x1', '-resize', scalePercentage + '%', '-unsharp', '1.5x1+0.7+0.02', sessionDir + '/' + newFilename ];
+            var convertArr = [sessionDir + '/' + file.originalname, '-filter', 'Lanczos', '-sampling-factor', '1x1', '-resize', scalePercentage + '%', '-unsharp', '1.5x1+0.7+0.02', sessionDir + '/' + newFilename ];
 
             console.log(convertArr);
 
@@ -329,11 +329,11 @@ app.post('/api/legend', function(req, res) {
     fs.mkdirSync(sessionDir);
 
     _.each(files, function(file) {
-        fs.renameSync(file.path, sessionDir + '/' + file.name);
+        fs.renameSync(file.path, sessionDir + '/' + file.originalname);
     });
 
     async.each(files, function (file, callback) {
-        imageMagick.identify(sessionDir + '/' + file.name, function(err, features) {
+        imageMagick.identify(sessionDir + '/' + file.originalname, function(err, features) {
             var dpiMultiplier = features.width / 576;
 
             console.log("dpiMultiplier", dpiMultiplier);
@@ -343,7 +343,7 @@ app.post('/api/legend', function(req, res) {
             var vtextPaddingInner = 16 * dpiMultiplier;
 
             var convertArr = [
-                sessionDir + '/' + file.name,
+                sessionDir + '/' + file.originalname,
                 '-background',
                 'none',
                 '-gravity',
@@ -395,7 +395,7 @@ app.post('/api/legend', function(req, res) {
                     '-append',
                 ')',
                 '+append',
-                sessionDir + '/legend-' + file.name
+                sessionDir + '/legend-' + file.originalname
             ];
 
             console.log(convertArr);
@@ -405,7 +405,7 @@ app.post('/api/legend', function(req, res) {
                 if (stdout) console.log(stdout);
                 if (stderr) console.log(stderr);
 
-                resultFilenames.push('legend-' + file.name);
+                resultFilenames.push('legend-' + file.originalname);
                 callback();
             });
         });
