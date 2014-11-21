@@ -1,0 +1,96 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>miikan</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/bootstrap.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="container">
+    <h1>Annotate graphs</h1>
+    <form enctype="multipart/form-data" method="post" action="/api/annotate">
+        <div style="padding-top: 10px">
+            <span class="btn fileinput-button">
+            <i class="icon-plus icon-white"></i>
+            <span>Select files</span>
+            <input type="file" name="files[]" multiple>
+            </span>
+        </div>
+        <div style="padding-top: 10px">
+            Z axis interval:
+            <input type="text" name="zinterval" />
+        </div>
+        <div style="padding-top: 5px">
+            Z axis unit:
+            <input type="text" name="zunit" />
+        </div>
+        <div style="padding-top: 10px">
+            X and Y axis interval:
+            <input type="text" name="xyinterval" />
+        </div>
+        <div style="padding-top: 5px">
+            X and Y axis unit:
+            <input type="text" name="xyunit" />
+        </div>
+        <div style="padding-top: 5px">
+            Font size:
+            <input type="text" name="fontsize" value=32 />
+        </div>
+        <div style="padding-top: 10px">
+            <button type="submit" class="btn btn-success">Process</button>
+        </div>
+    </form>
+
+    <h1>Resize images to percentage</h1>
+    <form enctype="multipart/form-data" method="post" action="/api/resize">
+        <div style="padding-top: 10px">
+            <span class="btn fileinput-button">
+            <i class="icon-plus icon-white"></i>
+            <span>Select files</span>
+            <input type="file" name="files[]" multiple>
+            </span>
+        </div>
+        <div style="padding-top: 10px">
+            Percentage of original size:
+            <input type="text" name="resizepercentage" />
+        </div>
+        <div style="padding-top: 10px">
+            <button type="submit" class="btn btn-success">Process</button>
+        </span>
+        </div>
+    </form>
+
+    <h1>Add legend to graphs</h1>
+    <form enctype="multipart/form-data" method="post" action="/api/legend">
+        <div style="padding-top: 10px">
+            <span class="btn fileinput-button">
+            <i class="icon-plus icon-white"></i>
+            <span>Select files</span>
+            <input type="file" name="files[]" multiple>
+            </span>
+        </div>
+        <div style="padding-top: 10px">
+            Scale:
+            <input type="text" name="legendscale" />
+        </div>
+        <div style="padding-top: 5px">
+            Unit:
+            <input type="text" name="legendunit" />
+        </div>
+        <div style="padding-top: 10px">
+            <input type="radio" name="legendcolor" value="color" checked="checked" /><span style="padding-left: 5px">Color</span>
+            <input type="radio" name="legendcolor" value="bw" /><span style="padding-left: 5px">Black and white</span>
+        </div>
+        <div style="padding-top: 5px">
+            Font size:
+            <input type="text" name="fontsize" value=32 />
+        </div>
+        <div style="padding-top: 10px">
+            <button type="submit" class="btn btn-success">Process</button>
+        </div>
+    </form>
+</div>
+</body> 
+</html>

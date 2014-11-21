@@ -1,0 +1,24 @@
+{
+  "name": "miikan",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://git.gamma.fi/markus/miikan.git"
+  },
+  "author": "Markus Mattinen <miikan@gamma.fi>",
+  "license": "ISC",
+  "dependencies": {
+    "async": "^0.9.0",
+    "express": "^4.10.2",
+    "imagemagick": "^0.1.3",
+    "lodash": "^2.4.1",
+    "multer": "^0.1.6",
+    "rimraf": "^2.2.8",
+    "zip-paths": "^0.3.0"
+  }
+}
