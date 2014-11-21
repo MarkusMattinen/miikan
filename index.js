@@ -11,6 +11,7 @@ var zipPaths = require('zip-paths');
 var express = require('express');
 var multer = require('multer');
 var _ = require('lodash');
+var serveStatic = require('serve-static');
 
 var app = express();
 
@@ -388,5 +389,7 @@ app.post('/api/legend', function(req, res) {
         finalize(err, resultFilenames, sessionDir, req, res);
     });
 });
+
+app.use(serveStatic('frontend'));
 
 app.listen(process.env.PORT || 5000);

@@ -19,6 +19,7 @@
     "lodash": "^2.4.1",
     "multer": "^0.1.6",
     "rimraf": "^2.2.8",
+    "serve-static": "^1.7.1",
     "zip-paths": "^0.3.0"
   }
 }
