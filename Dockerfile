@@ -1,11 +1,5 @@
-# miikan app, node.js, nginx, etcd registration and supervisord on trusty
-FROM markusma/nginx-etcdregister:1.7
-
-RUN curl -sL https://deb.nodesource.com/setup | bash - \
- && apt-get update \
- && apt-get install -y --no-install-recommends nodejs \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+# miikan app, node.js, nginx, etcd registration and supervisord
+FROM markusma/nodejs:0.12
 
 COPY . /app
 WORKDIR /app
