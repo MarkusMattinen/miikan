@@ -1,0 +1,42 @@
+# /etc/nginx/server.conf
+
+map $http_upgrade $connection_upgrade { default upgrade; '' close; }
+map $http_x_forwarded_by $header_x_forwarded_by { default $http_x_forwarded_by; '' $server_addr_port; }
+map $http_x_forwarded_port $header_x_forwarded_port { default $http_x_forwarded_port; '' $server_port; }
+map $http_x_forwarded_proto $header_x_forwarded_proto { default $http_x_forwarded_proto; '' $scheme; }
+map $http_x_forwarded_protocol $header_x_forwarded_protocol { default $http_x_forwarded_protocol; '' $scheme; }
+map $http_x_forwarder_server $header_x_forwarder_server { default $http_x_forwarder_server; '' $host; }
+map $http_x_real_ip $header_x_real_ip { default $http_x_real_ip; '' $remote_addr; }
+map $http_x_scheme $header_x_scheme { default $http_x_scheme; '' $scheme; }
+
+server {
+    set $server_addr_port '${server_addr}:${server_port}';
+    listen [::]:5000 ipv6only=off;
+    server_name localhost;
+
+    more_set_headers "X-Frame-Options: DENY";
+    more_set_headers "Access-Control-Allow-Origin: https://{{ getenv "VHOST" }}";
+
+    location / {
+        proxy_pass http://127.0.0.1:5001;
+
+        proxy_set_header Connection $connection_upgrade;
+        proxy_set_header Host $http_host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        # set these headers only if they were not set by a downstream proxy
+        proxy_set_header X-Forwarded-By $header_x_forwarded_by;
+        proxy_set_header X-Forwarded-Port $header_x_forwarded_port;
+        proxy_set_header X-Forwarded-Proto $header_x_forwarded_proto;
+        proxy_set_header X-Forwarded-Protocol $header_x_forwarded_protocol;
+        proxy_set_header X-Forwarder-Server $header_x_forwarder_server;
+        proxy_set_header X-Real-IP $header_x_real_ip;
+        proxy_set_header X-Scheme $header_x_scheme;
+
+        proxy_http_version 1.1;
+        proxy_redirect off;
+        proxy_buffering off;
+        proxy_max_temp_file_size 0;
+    }
+}
