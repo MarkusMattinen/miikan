@@ -83,6 +83,7 @@ app.post('/api/annotate', function(req, res) {
     var zdecimal = 0;
     var xydecimal = 0;
     var fontsize = 32;
+    var xyintervalcount = 1;
 
     if (parseFloat(req.body.zinterval)) {
         zdecimal = decimalPlaces(req.body.zinterval);
@@ -100,6 +101,10 @@ app.post('/api/annotate', function(req, res) {
 
     if (parseFloat(req.body.fontsize)) {
         fontsize = parseFloat(req.body.fontsize);
+    }
+
+    if (parseFloat(req.body.xyintervalcount)) {
+        xyintervalcount = parseFloat(req.body.xyintervalcount);
     }
 
     fs.mkdirSync(sessionDir);
@@ -147,15 +152,19 @@ app.post('/api/annotate', function(req, res) {
                 return copyLineWithOffset(line, { start: point, end: point });
             };
 
+            var centerGravityHorizontal = function(point) {
+                point.x = point.x - (features.width / dpiMultiplier / 2);
+                return point;
+            };
+
             var toggleGravityHorizontal = function(point) {
                 point.x = (features.width / dpiMultiplier) - point.x;
                 return point;
             };
 
-            var drawTextFromPoint = function(text, point) {
-                convertArr.push('-annotate');
-                convertArr.push('+' + (point.x * dpiMultiplier).toFixed(0) + '+' + (point.y * dpiMultiplier).toFixed(0));
-                convertArr.push(text);
+            var drawRotatedTextFromPoint = function(text, point, rotation) {
+                convertArr.push('-draw');
+                convertArr.push('translate ' + (point.x * dpiMultiplier).toFixed(0) + ',' + (point.y * dpiMultiplier).toFixed(0) + ' rotate ' + rotation + ' text 0,0 \'' + text + '\'');
             };
 
             var verticalLine = { start: { x: 224, y: 434 }, end: { x: 224, y: 612 } };
@@ -164,34 +173,27 @@ app.post('/api/annotate', function(req, res) {
 
             drawLine(verticalLine);
 
-            var diagonalLine1Offsets = { start: { x: -16, y: -8 }, end: { x: 16, y: 8 } };
+            var notchLengthX = 16;
+            var notchLengthY = 8;
+
+            var diagonalLine1Offsets = { start: { x: -notchLengthX, y: -notchLengthY }, end: { x: notchLengthX, y: notchLengthY } };
             drawLine(copyLineWithOffset(diagonalLine1, diagonalLine1Offsets));
 
-            var diagonalLine2Offsets = { start: { x: -16, y: 8 }, end: { x: 16, y: -8 } };
+            var diagonalLine2Offsets = { start: { x: -notchLengthX, y: notchLengthY }, end: { x: notchLengthX, y: -notchLengthY } };
             drawLine(copyLineWithOffset(diagonalLine2, diagonalLine2Offsets));
 
-            var m = 0;
+            var notchToLeft = { start: { x: 0, y: 0 }, end: { x: -notchLengthX, y: 0 } };
+            drawLine(lineFromPoint(pointOnLine(verticalLine, 0), notchToLeft));
+            drawLine(lineFromPoint(pointOnLine(verticalLine, 0.5), notchToLeft));
 
-            while (m <= 0.5) {
-                var notchToLeft = { start: { x: 0, y: 0 }, end: { x: -16, y: 0 } };
-                drawLine(lineFromPoint(pointOnLine(verticalLine, m), notchToLeft));
-                m += 0.5;
+            for (var i = 0; i < xyintervalcount; ++i) {
+                var notchToBottomLeft = { start: { x: 0, y: 0 }, end: { x: -notchLengthX, y: notchLengthY } };
+                drawLine(lineFromPoint(pointOnLine(diagonalLine1, i * (1 / xyintervalcount)), notchToBottomLeft));
             }
 
-            m = 0;
-
-            while (m <= 0.75) {
-                var notchToBottomLeft = { start: { x: 0, y: 0 }, end: { x: -16, y: 8 } };
-                drawLine(lineFromPoint(pointOnLine(diagonalLine1, m), notchToBottomLeft));
-                m += 0.25;
-            }
-
-            m = 0.25;
-
-            while (m <= 1.0) {
-                var notchToBottomRight = { start: { x: 0, y: 0 }, end: { x: 16, y: 8 } };
-                drawLine(lineFromPoint(pointOnLine(diagonalLine2, m), notchToBottomRight));
-                m += 0.25;
+            for (var i = 1; i < xyintervalcount + 1; ++i) {
+                var notchToBottomRight = { start: { x: 0, y: 0 }, end: { x: notchLengthX, y: notchLengthY } };
+                drawLine(lineFromPoint(pointOnLine(diagonalLine2, i * (1 / xyintervalcount)), notchToBottomRight));
             }
 
             convertArr.push('-gravity');
@@ -204,21 +206,52 @@ app.post('/api/annotate', function(req, res) {
             convertArr.push('-pointsize');
             convertArr.push((fontsize * dpiMultiplier).toFixed(0));
 
-            drawTextFromPoint((xyinterval * 1).toFixed(xydecimal) + ' ' + xyunit, copyPointWithOffset(toggleGravityHorizontal(pointOnLine(diagonalLine1, 0.75)), { x: 20, y: 10 }));
-            drawTextFromPoint((xyinterval * 2).toFixed(xydecimal) + ' ' + xyunit, copyPointWithOffset(toggleGravityHorizontal(pointOnLine(diagonalLine1, 0.5)), { x: 20, y: 10 }));
-            drawTextFromPoint((xyinterval * 3).toFixed(xydecimal) + ' ' + xyunit, copyPointWithOffset(toggleGravityHorizontal(pointOnLine(diagonalLine1, 0.25)), { x: 20, y: 10 }));
-            drawTextFromPoint((xyinterval * 4).toFixed(xydecimal) + ' ' + xyunit, copyPointWithOffset(toggleGravityHorizontal(pointOnLine(diagonalLine1, 0.0)), { x: 20, y: 10 }));
+            if (xyintervalcount === 1) {
+                convertArr.push('-gravity');
+                convertArr.push('north');
+
+                var textOffsetX = 16;
+                var textOffsetY = -8;
+                var textRotation = 26.565 // arctan(0.5)
+
+                drawRotatedTextFromPoint((xyinterval).toFixed(xydecimal) + ' ' + xyunit, centerGravityHorizontal(copyPointWithOffset(pointOnLine(diagonalLine1, 0.5), { x: -notchLengthX - textOffsetX, y: notchLengthY + textOffsetY })), textRotation);
+            } else {
+                convertArr.push('-gravity');
+                convertArr.push('northeast');
+
+                var textOffsetX = 2;
+                var textOffsetY = 1;
+
+                for (var i = 1; i < xyintervalcount + 1; ++i) {
+                    drawRotatedTextFromPoint((i * xyinterval).toFixed(xydecimal) + ' ' + xyunit, toggleGravityHorizontal(copyPointWithOffset(pointOnLine(diagonalLine1, (1 - i * (1 / xyintervalcount))), { x: -notchLengthX - textOffsetX, y: notchLengthY + textOffsetY })), 0);
+                }
+            }
 
             convertArr.push('-gravity');
             convertArr.push('northeast');
 
-            drawTextFromPoint((zinterval * 1).toFixed(zdecimal) + ' ' + zunit, copyPointWithOffset(toggleGravityHorizontal(pointOnLine(verticalLine, 0.0)), { x: 20, y: -12 }));
-            drawTextFromPoint('0 ' + zunit, copyPointWithOffset(toggleGravityHorizontal(pointOnLine(verticalLine, 0.5)), { x: 20, y: -12 }));
-            drawTextFromPoint((zinterval * -1).toFixed(zdecimal) + ' ' + zunit, copyPointWithOffset(toggleGravityHorizontal(pointOnLine(verticalLine, 1.0)), { x: 20, y: -12 }));
+            drawRotatedTextFromPoint((zinterval).toFixed(zdecimal) + ' ' + zunit, toggleGravityHorizontal(copyPointWithOffset(pointOnLine(verticalLine, 0.0), { x: -notchLengthX - 4, y: fontsize * -0.4 })), 0);
+            drawRotatedTextFromPoint('0', toggleGravityHorizontal(copyPointWithOffset(pointOnLine(verticalLine, 0.5), { x: -notchLengthX - 4, y: fontsize * -0.4 })), 0);
 
-            drawTextFromPoint((xyinterval * 1).toFixed(xydecimal) + ' ' + xyunit, copyPointWithOffset(pointOnLine(diagonalLine2, 0.25), { x: 18, y: 9 }));
-            drawTextFromPoint((xyinterval * 2).toFixed(xydecimal) + ' ' + xyunit, copyPointWithOffset(pointOnLine(diagonalLine2, 0.5), { x: 18, y: 9 }));
-            drawTextFromPoint((xyinterval * 3).toFixed(xydecimal) + ' ' + xyunit, copyPointWithOffset(pointOnLine(diagonalLine2, 0.75), { x: 18, y: 9 }));
+            if (xyintervalcount === 1) {
+                convertArr.push('-gravity');
+                convertArr.push('north');
+
+                var textOffsetX = 16;
+                var textOffsetY = -8;
+
+                drawRotatedTextFromPoint((xyinterval).toFixed(xydecimal) + ' ' + xyunit, centerGravityHorizontal(copyPointWithOffset(pointOnLine(diagonalLine2, 0.5), { x: notchLengthX + textOffsetX, y: notchLengthY + textOffsetY })), -textRotation);
+            } else {
+                convertArr.push('-gravity');
+                convertArr.push('northwest');
+
+                var textOffsetX = 4;
+                var textOffsetY = 2;
+
+                for (var i = 1; i < xyintervalcount + 1; ++i) {
+                    drawRotatedTextFromPoint((i * xyinterval).toFixed(xydecimal) + ' ' + xyunit, copyPointWithOffset(pointOnLine(diagonalLine2, i * (1 / xyintervalcount)), { x: notchLengthX + textOffsetX, y: notchLengthY + textOffsetY }), 0);
+                }
+            }
 
             convertArr.push(sessionDir + '/annotated-' + file.originalname);
 
